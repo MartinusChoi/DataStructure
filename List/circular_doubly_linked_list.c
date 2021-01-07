@@ -26,8 +26,8 @@ int main() {
 	int data, rank;
 	char flag;
 
-	printf("[ Doubly Linked List ]\n");
-	printf("======================\n");
+	printf("[ Circular Doubly Linked List ]\n");
+	printf("===============================\n");
 
 	while (1) {
 		printf("\n(function) : \n");
@@ -51,7 +51,6 @@ int main() {
 
 			node = createNode(data);
 			if (node == NULL) continue;
-
 			appendNode(&List, node);
 
 			printf("[output] Appended (data : %d)\n", data);
@@ -62,11 +61,9 @@ int main() {
 			getchar();
 
 			current = getNodeAt(List, rank);
-			if (current == NULL) continue;
-
 			removeNode(&List, current);
 			destroyNode(current);
-
+			
 			printf("[output] Removed\n");
 		}
 		else if (flag == 'A') {
@@ -75,11 +72,8 @@ int main() {
 			getchar();
 
 			current = getNodeAt(List, rank);
-			if (current == NULL) continue;
-
 			node = createNode(data);
 			if (node == NULL) continue;
-
 			insertAfter(current, node);
 
 			printf("[output] inserted after %d (data : %d)\n", current->data, node->data);
@@ -90,11 +84,8 @@ int main() {
 			getchar();
 
 			current = getNodeAt(List, rank);
-			if (current == NULL) continue;
-
 			node = createNode(data);
 			if (node == NULL) continue;
-
 			insertBefore(&List, current, node);
 
 			printf("[output] inserted before %d (data : %d)\n", current->data, node->data);
@@ -105,9 +96,8 @@ int main() {
 			getchar();
 
 			current = getNodeAt(List, rank);
-			if (current == NULL) continue;
 
-			printf("[output] data at rank [%d] is %d", rank, current->data);
+			printf("[output] data at rank [%d] is %d\n", rank, current->data);
 		}
 		else if (flag == 's') {
 			printf("input rank, data : ");
@@ -115,11 +105,10 @@ int main() {
 			getchar();
 
 			current = getNodeAt(List, rank);
-			if (current == NULL) continue;
-
+			
 			current->data = data;
 
-			printf("[output] set data at rank [%d] to %d", rank, current->data);
+			printf("[output] set data at rank [%d] to %d\n", rank, current->data);
 		}
 		else if (flag == 'p') {
 			printAll(List);
@@ -137,9 +126,8 @@ NODE* createNode(int data)
 {
 	NODE* node = (NODE*)malloc(1 * sizeof(NODE));
 
-
 	if (node == NULL) {
-		printf("Create node failed\n");
+		printf("create node failed!\n");
 		return NULL;
 	}
 
@@ -159,7 +147,7 @@ void destroyAllNode(NODE** Head)
 {
 	if ((*Head) == NULL) return;
 
-	if ((*Head)->next == NULL) {
+	if ((*Head)->next == (*Head)) {
 		free((*Head));
 		return;
 	}
@@ -168,7 +156,7 @@ void destroyAllNode(NODE** Head)
 	NODE* tmp;
 
 	current = (*Head)->next;
-	while (current != NULL) {
+	while (current != (*Head)) {
 		tmp = current->next;
 		free(current);
 		current = tmp;
@@ -178,88 +166,85 @@ void destroyAllNode(NODE** Head)
 
 void appendNode(NODE** Head, NODE* node)
 {
+	// List에 아직 아무것도 없으면
 	if ((*Head) == NULL) {
+		// node를 Head 노드로 지정하고
 		(*Head) = node;
+
+		// node의 prev과 next를 모두 자기 자신으로 지정
+		node->next = (*Head);
+		node->prev = (*Head);
 	}
+	// List가 비어있지 않다면
 	else {
-		NODE* current = (*Head);
+		// Tail을 찾아내고
+		NODE* Tail = (*Head)->prev;
 
-		while (current->next != NULL) {
-			current = current->next;
-		}
+		// Head의 prev와 Tail의 next를 모두 node로 지정함.
+		(*Head)->prev = node;
+		Tail->next = node;
 
-		current->next = node;
-		node->prev = current;
+		// node가 Head와 Tail 사이에 위치하도록 지정함.
+		node->prev = Tail;
+		node->next = (*Head);
 	}
 }
 
 void insertAfter(NODE* current, NODE* node)
 {
-	// node의 prev와 next를 지정함.
-	node->prev = current;
+	// 삽입할 노드의 next가 current의 다음 노드를 가리키도록 하고
+	// node의 이전 노드가 current이도록 함.
 	node->next = current->next;
+	node->prev = current;
 
-	// 삽입기준인 current의 next가 NULL 아니면
-	if (current->next != NULL) {
-		// current->next의 prev를 삽입할 node로 저장함.
-		(current->next)->prev = node;
-	}
-
-	// current의 next에 삽입할 node를 지정함.
+	// current의 다음 노드의 prev가 node를 가리키도록 하고
+	// current의 next가 node를 가리키도록 함.
+	(current->next)->prev = node;
 	current->next = node;
 }
 
 void insertBefore(NODE** Head, NODE* current, NODE* node)
 {
-	// node의 next를 current로 지정
+	// 삽입할 노드의 next가 current이도록 하고
+	// prev가 current의 이전 노드이도록 지정함.
 	node->next = current;
+	node->prev = current->prev;
 
-	// 만약 삽입기준이 Head 노드이면
-	if ((*Head) == current) {
-		// Head노드를 삽입할 node로 바꿈.
-		(*Head) = node;
-	}
-	else { // 삽입 기준이 Head가 아니면
-		// node의 prev에 삽입 기준 노드의 prev를 지정하고
-		node->prev = current->prev;
-		// current의 prev의 next에 node를 지정한다.
-		(current->prev)->next = node;
-	}
-
-	// 공통적으로 current의 prev에 node를 지정한다.
+	// current의 이전 노드의 next가 삽입할 노드이도록 지정하고
+	// current의 prev가 삽입할 노드이도록 지정함.
+	(current->prev)->next = node;
 	current->prev = node;
+
+	// 단 삽입 기준이 Head 일경우 Head 앞에 삽입하였으므로
+	// Head를 node로 변경함.
+	if ((*Head) == current)
+		(*Head) = node;
 }
 
 void removeNode(NODE** Head, NODE* remove)
 {
+	// Head 노드를 지워야 한다면
 	if ((*Head) == remove) {
+		// Head가 하나 다음 노드를 가리키게 함.
 		(*Head) = remove->next;
-		
-		if ((*Head) != NULL)
-			(*Head)->prev = NULL;
-	}
-	else {
-		(remove->prev)->next = remove->next;
-
-		if (remove->next != NULL) {
-			(remove->next)->prev = remove->prev;
-		}
 	}
 
-	remove->prev = NULL;
+	// 지울 노드의 앞뒤 노드가 서로를 가리키게 함.
+	(remove->prev)->next = remove->next;
+	(remove->next)->prev = remove->prev;
+
+	// 지울 노드의 포인터 변수를 초기화 함.
 	remove->next = NULL;
+	remove->prev = NULL;
 }
 
 NODE* getNodeAt(NODE* Head, int rank)
 {
 	NODE* current = Head;
 
-	if ((current != NULL) && (--rank) >= 0) {
+	while ((current != NULL) && (--rank) >= 0) {
 		current = current->next;
 	}
-
-	if (current == NULL)
-		printf("No such node!\n");
 
 	return current;
 }
@@ -267,12 +252,15 @@ NODE* getNodeAt(NODE* Head, int rank)
 void printAll(NODE* Head)
 {
 	NODE* current = Head;
-
+	
 	printf("[output] ");
 
 	while (current != NULL) {
 		printf("%d ", current->data);
 		current = current->next;
+
+		if (current == Head)
+			break;
 	}
 
 	printf("\n");
